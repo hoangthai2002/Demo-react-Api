@@ -14,6 +14,8 @@
 @rem limitations under the License.
 @rem
 
+
+@rem CHẠY TRÊN WINDOWN
 @if "%DEBUG%"=="" @echo off
 @rem ##########################################################################
 @rem
