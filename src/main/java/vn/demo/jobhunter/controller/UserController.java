@@ -2,12 +2,16 @@ package vn.demo.jobhunter.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import com.turkraft.springfilter.boot.Filter;
+
 import vn.demo.jobhunter.domain.User;
+import vn.demo.jobhunter.domain.dto.ResultPaginationDTO;
 import vn.demo.jobhunter.service.UserService;
+import vn.demo.jobhunter.util.annotation.ApiMessage;
 import vn.demo.jobhunter.util.error.IdInvalidException;
 
-import java.util.List;
-
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,9 +40,10 @@ public class UserController {
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<User>> getUserFindAll() {
-        // List<User> listUser=this.userService.fetchAllUser();
-        return ResponseEntity.status(HttpStatus.OK).body(this.userService.fetchAllUser());
+    @ApiMessage("fetch all users")
+    public ResponseEntity<ResultPaginationDTO> getUserFindAll(@Filter Specification<User> spec, Pageable pageable) {
+
+        return ResponseEntity.status(HttpStatus.OK).body(this.userService.fetchAllUser(spec, pageable));
 
     }
 
@@ -51,6 +56,7 @@ public class UserController {
     }
 
     @DeleteMapping("/users/{id}")
+
     public ResponseEntity<String> deleteUser(@PathVariable("id") long id) throws IdInvalidException {
 
         if (id >= 1500) {
