@@ -38,7 +38,7 @@ public class Company {
 
     private String createdBy;
 
-    private String updateBy;
+    private String updatedBy;
 
     public long getId() {
         return id;
@@ -105,11 +105,11 @@ public class Company {
     }
 
     public String getUpdateBy() {
-        return updateBy;
+        return updatedBy;
     }
 
     public void setUpdateBy(String updateBy) {
-        this.updateBy = updateBy;
+        this.updatedBy = updateBy;
     }
 
     @PrePersist
@@ -122,7 +122,7 @@ public class Company {
 
     @PreUpdate
     public void handleBeForeUpdate() {
-        this.updateBy = SecurityUtil.getCurrentUserLogin().isPresent() == true
+        this.updatedBy = SecurityUtil.getCurrentUserLogin().isPresent() == true
                 ? SecurityUtil.getCurrentUserLogin().get()
                 : "";
         this.updatedAt = Instant.now();

@@ -4,7 +4,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.turkraft.springfilter.boot.Filter;
 
+import jakarta.validation.Valid;
 import vn.demo.jobhunter.domain.User;
+import vn.demo.jobhunter.domain.dto.ResCreateUserDTO;
+import vn.demo.jobhunter.domain.dto.ResGetIdUserDTO;
+import vn.demo.jobhunter.domain.dto.ResUpdateUserDTO;
 import vn.demo.jobhunter.domain.dto.ResultPaginationDTO;
 import vn.demo.jobhunter.service.UserService;
 import vn.demo.jobhunter.util.annotation.ApiMessage;
@@ -36,9 +40,15 @@ public class UserController {
     }
 
     @GetMapping("/users/{id}")
-    public ResponseEntity<User> getUser(@PathVariable("id") long id) {
+    public ResponseEntity<ResGetIdUserDTO> getUserById(@PathVariable("id") long id) throws IdInvalidException {
+
         User user = this.userService.getUserById(id);
-        return ResponseEntity.status(HttpStatus.OK).body(user);
+
+        if (user == null) {
+            throw new IdInvalidException("User với Id" + " " + id + " " + "không tồn tại");
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(this.userService.convertToResGetIdUserDTO(user));
     }
 
     @GetMapping("/users")
@@ -50,29 +60,48 @@ public class UserController {
     }
 
     @PostMapping("/users")
-    public ResponseEntity<User> newCreateUser(@RequestBody User postManUser) {
+    @ApiMessage("Create a new User ")
+    public ResponseEntity<ResCreateUserDTO> newCreateUser(@Valid @RequestBody User postManUser)
+            throws IdInvalidException {
+        // check email có trùng hay ko
+        boolean isEmailExist = this.userService.isEmailExist(postManUser.getEmail());
+
+        if (isEmailExist) {
+            throw new IdInvalidException(
+                    "Email" + postManUser.getEmail() + "  " + "đã tồn tại,vui lòng sử dụng email khác");
+        }
+
         String hashPassword = this.passwordEncoder.encode(postManUser.getPassword());
         postManUser.setPassword(hashPassword);
+
         User newUser = this.userService.handelPostUser(postManUser);
-        return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.covertToResCreateUserDTO(newUser));
     }
 
     @DeleteMapping("/users/{id}")
-
-    public ResponseEntity<String> deleteUser(@PathVariable("id") long id) throws IdInvalidException {
-
-        if (id >= 1500) {
-            throw new IdInvalidException("Id khong lon hon 1500");
+    @ApiMessage("Delete User Success")
+    public ResponseEntity<Void> deleteUser(@PathVariable("id") long id)
+            throws IdInvalidException {
+        User currentUser = this.userService.fetchUserById(id);
+        if (currentUser == null) {
+            throw new IdInvalidException("User với id " + id + "không tồn tai");
         }
+
         this.userService.handelDeleteUser(id);
-        return ResponseEntity.ok("Delete Success");
-        // return ResponseEntity.status(HttpStatus.OK).body("Delete Success");
+        return ResponseEntity.ok().body(null);
+
     }
 
     @PutMapping("/users")
-    public ResponseEntity<User> updateUser(@RequestBody User user) {
+    @ApiMessage("Update User Success")
+    public ResponseEntity<ResUpdateUserDTO> updateUser(@RequestBody User user)
+            throws IdInvalidException {
+
         User updateUser = this.userService.handelUpdateUser(user);
-        return ResponseEntity.ok().body(updateUser);
+        if (updateUser == null) {
+            throw new IdInvalidException("User với id " + user.getId() + "không tồn tại");
+        }
+        return ResponseEntity.ok().body(this.userService.convertResUpdateUserDTO(updateUser));
     }
 
 }

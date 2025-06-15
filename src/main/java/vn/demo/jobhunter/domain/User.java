@@ -8,8 +8,12 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
 import vn.demo.jobhunter.util.constant.GenderEnum;
+import vn.demo.jobhunter.util.error.SecurityUtil;
 
 @Entity
 @Table(name = "Users")
@@ -19,7 +23,9 @@ public class User {
     private long id;
 
     private String name;
+    @NotBlank(message = "Email không được bỏ trống")
     private String email;
+    @NotBlank(message = "Password không được bỏ trống")
     private String password;
 
     private int age;
@@ -127,6 +133,22 @@ public class User {
 
     public void setUpdatedBy(String updatedBy) {
         this.updatedBy = updatedBy;
+    }
+
+    @PrePersist
+    public void handleBeForeCreate() {
+        this.createdBy = SecurityUtil.getCurrentUserLogin().isPresent() == true
+                ? SecurityUtil.getCurrentUserLogin().get()
+                : "";
+        this.createdAt = Instant.now();
+    }
+
+    @PreUpdate
+    public void handleBeForeUpdate() {
+        this.updatedBy = SecurityUtil.getCurrentUserLogin().isPresent() == true
+                ? SecurityUtil.getCurrentUserLogin().get()
+                : "";
+        this.updatedAt = Instant.now();
     }
 
 }
