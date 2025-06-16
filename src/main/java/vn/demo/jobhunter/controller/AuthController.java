@@ -11,8 +11,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
+import vn.demo.jobhunter.domain.User;
 import vn.demo.jobhunter.domain.dto.LoginDTO;
 import vn.demo.jobhunter.domain.dto.RestLoginDTO;
+import vn.demo.jobhunter.service.UserService;
 import vn.demo.jobhunter.util.error.SecurityUtil;
 
 @RestController
@@ -21,11 +23,13 @@ public class AuthController {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final SecurityUtil securityUtil;
+    private final UserService userService;
 
     public AuthController(AuthenticationManagerBuilder authenticationManagerBuilder,
-            SecurityUtil securityUtil) {
+            SecurityUtil securityUtil, UserService userService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.securityUtil = securityUtil;
+        this.userService = userService;
 
     }
 
@@ -44,6 +48,15 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         RestLoginDTO res = new RestLoginDTO();
+        User currentUserDB = this.userService.handleGetUserByUsername(loginDTO.getUsername());
+        if (currentUserDB != null) {
+            RestLoginDTO.UserLogin userLogin = new RestLoginDTO.UserLogin(
+                    currentUserDB.getId(),
+                    currentUserDB.getEmail(),
+                    currentUserDB.getName());
+            res.setUser(userLogin);
+
+        }
         res.setAccessToken(access_token);
 
         return ResponseEntity.ok().body(res);
