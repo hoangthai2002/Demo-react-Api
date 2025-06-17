@@ -2,7 +2,6 @@ package vn.demo.jobhunter.service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -141,6 +140,15 @@ public class UserService {
         rs.setCreateAt(user.getCreatedAt());
         rs.setUpdateAt(user.getUpdatedAt());
         return rs;
+    }
+
+    public void updateUserToken(String token, String email) {
+        User currentUser = this.handleGetUserByUsername(email);
+        if (currentUser != null) {
+            currentUser.setRefreshToken(token);
+            this.userRepository.save(currentUser);
+        }
+
     }
 
 }

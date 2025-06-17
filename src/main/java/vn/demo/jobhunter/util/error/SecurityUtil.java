@@ -17,6 +17,8 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
+import vn.demo.jobhunter.domain.dto.RestLoginDTO;
+
 @Service
 public class SecurityUtil {
     public final JwtEncoder jwtEncoder;
@@ -30,14 +32,16 @@ public class SecurityUtil {
 
     @Value("${test.jwt.base64-secret}")
     private String JwtKey;
-    @Value("${test.jwt.token-validity-in-seconds}")
-    private Long JwtKeyExpiration;
+    @Value("${test.jwt.access-token-validity-in-seconds}")
+    private Long accessTokenExpiration;
+    @Value("${test.jwt.refresh-token-validity-in-seconds}")
+    private Long refreshTokenExpiration;
 
-    public String createToken(Authentication authentication) {
+    public String createAccessToken(Authentication authentication) {
         // @formatter:off
         
         Instant now = Instant.now();
-        Instant validity = now.plus(this.JwtKeyExpiration, ChronoUnit.SECONDS);
+        Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
     
 
         // @formatter:off
@@ -47,6 +51,25 @@ public class SecurityUtil {
             .expiresAt(validity)
             .subject(authentication.getName())
             .claim("test", authentication)
+            .build();
+        //tạo ra phần header
+        JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
+        return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
+
+
+    }
+
+     public String createRefreshToken(String email,RestLoginDTO dto) {
+        // @formatter:off
+        Instant now = Instant.now();
+        Instant validity = now.plus(this.refreshTokenExpiration, ChronoUnit.SECONDS);   
+        // @formatter:off
+        //tạo ra phần boddy
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+            .issuedAt(now)
+            .expiresAt(validity)
+            .subject(email)//định danh người dùng là ai
+            .claim("user", dto.getUser())
             .build();
         //tạo ra phần header
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();

@@ -1,5 +1,8 @@
 package vn.demo.jobhunter.controller;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -33,6 +36,9 @@ public class AuthController {
 
     }
 
+    @Value("${test.jwt.refresh-token-validity-in-seconds}")
+    private Long refreshTokenExpiration;
+
     @PostMapping("/login")
     public ResponseEntity<RestLoginDTO> login(@Valid @RequestBody LoginDTO loginDTO) {
 
@@ -44,7 +50,7 @@ public class AuthController {
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 
         // create a token
-        String access_token = this.securityUtil.createToken(authentication);
+        String access_token = this.securityUtil.createAccessToken(authentication);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         RestLoginDTO res = new RestLoginDTO();
@@ -59,6 +65,26 @@ public class AuthController {
         }
         res.setAccessToken(access_token);
 
-        return ResponseEntity.ok().body(res);
+        // create refresh token
+        String refresh_token = this.securityUtil.createRefreshToken(loginDTO.getUsername(), res);
+
+        // update user
+        this.userService.updateUserToken(refresh_token, loginDTO.getUsername());
+
+        // set cookie
+        ResponseCookie resCookie = ResponseCookie.from("refresh_token", refresh_token)
+                .httpOnly(true)// Đánh dấu cookie là HttpOnly, nghĩa là nó chỉ có thể được truy cập bởi trình
+                               // duyệt thông
+                // qua HTTP mà không thể bị truy cập bởi JavaScript, giúp tăng cường bảo mật.
+                .secure(true)// Cookie sẽ chỉ được gửi qua các kết nối HTTPS, đảm bảo an toàn.
+
+                .path("/")// Xác định phạm vi của cookie, trong trường hợp này nó áp dụng cho toàn bộ
+                          // trang web ("/").
+                .maxAge(refreshTokenExpiration)// Thiết lập thời gian sống của cookie là 100 ngày, sau khoảng thời gian
+                                               // này,
+                // cookie sẽ hết hạn.
+                .build();// Hoàn thành quá trình tạo đối tượng ResponseCookie.
+
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, resCookie.toString()).body(res);
     }
 }

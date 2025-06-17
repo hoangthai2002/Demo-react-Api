@@ -73,8 +73,8 @@ public class UserController {
 
         String hashPassword = this.passwordEncoder.encode(postManUser.getPassword());
         postManUser.setPassword(hashPassword);
-
         User newUser = this.userService.handelPostUser(postManUser);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.covertToResCreateUserDTO(newUser));
     }
 
