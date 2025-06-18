@@ -8,6 +8,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +19,7 @@ import vn.demo.jobhunter.domain.User;
 import vn.demo.jobhunter.domain.dto.LoginDTO;
 import vn.demo.jobhunter.domain.dto.RestLoginDTO;
 import vn.demo.jobhunter.service.UserService;
+import vn.demo.jobhunter.util.annotation.ApiMessage;
 import vn.demo.jobhunter.util.error.SecurityUtil;
 
 @RestController
@@ -39,7 +41,7 @@ public class AuthController {
     @Value("${test.jwt.refresh-token-validity-in-seconds}")
     private Long refreshTokenExpiration;
 
-    @PostMapping("/login")
+    @PostMapping("/auth/login")
     public ResponseEntity<RestLoginDTO> login(@Valid @RequestBody LoginDTO loginDTO) {
 
         // Nạp input gồm username/password vào Security
@@ -50,7 +52,7 @@ public class AuthController {
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 
         // create a token
-        String access_token = this.securityUtil.createAccessToken(authentication);
+
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         RestLoginDTO res = new RestLoginDTO();
@@ -63,6 +65,7 @@ public class AuthController {
             res.setUser(userLogin);
 
         }
+        String access_token = this.securityUtil.createAccessToken(authentication, res.getUser());
         res.setAccessToken(access_token);
 
         // create refresh token
@@ -86,5 +89,22 @@ public class AuthController {
                 .build();// Hoàn thành quá trình tạo đối tượng ResponseCookie.
 
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, resCookie.toString()).body(res);
+    }
+
+    @GetMapping("/auth/account")
+    @ApiMessage("getAccount")
+    public ResponseEntity<RestLoginDTO.UserLogin> getAccount() {
+        String email = securityUtil.getCurrentUserLogin().isPresent() ? securityUtil.getCurrentUserLogin().get() : "";
+
+        User currentUserDB = this.userService.handleGetUserByUsername(email);
+        RestLoginDTO.UserLogin userLogin = new RestLoginDTO.UserLogin();
+        if (currentUserDB != null) {
+            userLogin.setId(currentUserDB.getId());
+            userLogin.setEmail(currentUserDB.getEmail());
+            userLogin.setName(currentUserDB.getName());
+
+        }
+
+        return ResponseEntity.ok().body(userLogin);
     }
 }
