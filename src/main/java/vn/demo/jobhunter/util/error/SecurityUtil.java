@@ -2,6 +2,8 @@ package vn.demo.jobhunter.util.error;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -41,6 +43,10 @@ public class SecurityUtil {
         // @formatter:off
         Instant now = Instant.now();
         Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
+
+        List<String> listAuthority=new ArrayList<>();
+        listAuthority.add("ROLE_USER-CREATE");
+        listAuthority.add("ROLE-USER-UPDATE");
         // @formatter:off
         //tạo ra phần boddy
         JwtClaimsSet claims = JwtClaimsSet.builder()
@@ -48,6 +54,7 @@ public class SecurityUtil {
             .expiresAt(validity)
             .subject(authentication.getName())
             .claim("user", dto)
+            .claim("permission", listAuthority)
             .build();
         //tạo ra phần header
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
