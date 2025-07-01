@@ -21,8 +21,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 
 import jakarta.validation.Valid;
 import vn.demo.jobhunter.domain.User;
-import vn.demo.jobhunter.domain.dto.ReqLoginDTO;
 import vn.demo.jobhunter.domain.dto.RestLoginDTO;
+import vn.demo.jobhunter.domain.dto.request.ReqLoginDTO;
 import vn.demo.jobhunter.service.UserService;
 import vn.demo.jobhunter.util.annotation.ApiMessage;
 import vn.demo.jobhunter.util.error.IdInvalidException;
