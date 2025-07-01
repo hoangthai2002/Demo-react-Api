@@ -1,4 +1,4 @@
-package vn.demo.jobhunter.domain.dto;
+package vn.demo.jobhunter.domain.response;
 
 import java.time.Instant;
 

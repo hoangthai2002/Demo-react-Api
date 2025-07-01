@@ -13,7 +13,7 @@ import com.turkraft.springfilter.boot.Filter;
 
 import jakarta.validation.Valid;
 import vn.demo.jobhunter.domain.Company;
-import vn.demo.jobhunter.domain.dto.ResultPaginationDTO;
+import vn.demo.jobhunter.domain.response.ResultPaginationDTO;
 import vn.demo.jobhunter.service.CompanyService;
 import vn.demo.jobhunter.util.annotation.ApiMessage;
 
