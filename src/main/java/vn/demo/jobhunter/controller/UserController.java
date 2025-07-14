@@ -7,7 +7,7 @@ import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import vn.demo.jobhunter.domain.User;
 import vn.demo.jobhunter.domain.response.ResCreateUserDTO;
-import vn.demo.jobhunter.domain.response.ResGetIdUserDTO;
+import vn.demo.jobhunter.domain.response.ResUserDTO;
 import vn.demo.jobhunter.domain.response.ResUpdateUserDTO;
 import vn.demo.jobhunter.domain.response.ResultPaginationDTO;
 import vn.demo.jobhunter.service.UserService;
@@ -40,9 +40,9 @@ public class UserController {
     }
 
     @GetMapping("/users/{id}")
-    public ResponseEntity<ResGetIdUserDTO> getUserById(@PathVariable("id") long id) throws IdInvalidException {
+    public ResponseEntity<ResUserDTO> getUserById(@PathVariable("id") long id) throws IdInvalidException {
 
-        User user = this.userService.getUserById(id);
+        User user = this.userService.fetchUserById(id);
 
         if (user == null) {
             throw new IdInvalidException("User với Id" + " " + id + " " + "không tồn tại");
@@ -73,9 +73,9 @@ public class UserController {
 
         String hashPassword = this.passwordEncoder.encode(postManUser.getPassword());
         postManUser.setPassword(hashPassword);
-        User newUser = this.userService.handelPostUser(postManUser);
+        User newUser = this.userService.handelCreateUser(postManUser);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.covertToResCreateUserDTO(newUser));
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.convertToResCreateUserDTO(newUser));
     }
 
     @DeleteMapping("/users/{id}")

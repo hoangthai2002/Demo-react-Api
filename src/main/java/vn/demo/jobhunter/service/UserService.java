@@ -9,27 +9,40 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import vn.demo.jobhunter.domain.Company;
 import vn.demo.jobhunter.domain.User;
 import vn.demo.jobhunter.domain.response.ResCreateUserDTO;
-import vn.demo.jobhunter.domain.response.ResGetIdUserDTO;
 import vn.demo.jobhunter.domain.response.ResUpdateUserDTO;
+import vn.demo.jobhunter.domain.response.ResUserDTO;
 import vn.demo.jobhunter.domain.response.ResultPaginationDTO;
 import vn.demo.jobhunter.repository.UserRepository;
 
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final CompanyService companyService;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, CompanyService companyService) {
         this.userRepository = userRepository;
+        this.companyService = companyService;
     }
 
-    public User getUserById(long id) {
+    public User fetchUserById(long id) {
         Optional<User> optionalUser = this.userRepository.findById(id);
         if (optionalUser.isPresent()) {
             return optionalUser.get();
         }
         return null;
+    }
+
+    public User handelCreateUser(User user) {
+        // check company
+        if (user.getCompany() != null) {
+            Optional<Company> companyOptional = this.companyService.findById(user.getCompany().getId());
+            user.setCompany(companyOptional.isPresent() ? companyOptional.get() : null);
+        }
+
+        return this.userRepository.save(user);
     }
 
     public ResultPaginationDTO fetchAllUser(Specification<User> spec, Pageable pageable) {
@@ -47,8 +60,8 @@ public class UserService {
 
         rs.setMeta(meta);
         // remove sensitive data
-        List<ResGetIdUserDTO> listUser = pageUser.getContent()
-                .stream().map(item -> new ResGetIdUserDTO(
+        List<ResUserDTO> listUser = pageUser.getContent()
+                .stream().map(item -> new ResUserDTO(
                         item.getId(),
                         item.getName(),
                         item.getEmail(),
@@ -56,44 +69,49 @@ public class UserService {
                         item.getAddress(),
                         item.getAge(),
                         item.getCreatedAt(),
-                        item.getUpdatedAt()))
+                        item.getUpdatedAt(),
+                        new ResUserDTO.CompanyUser(
+                                item.getCompany() != null ? item.getCompany().getId() : 0,
+                                item.getCompany() != null ? item.getCompany().getName() : null)))
+
                 .collect(Collectors.toList());
         rs.setResult(listUser);
         return rs;
-    }
-
-    public User handelPostUser(User user) {
-        return this.userRepository.save(user);
     }
 
     public void handelDeleteUser(Long id) {
         this.userRepository.deleteById(id);
     }
 
-    public User fetchUserById(long id) {
-        Optional<User> useOptional = this.userRepository.findById(id);
-        if (useOptional.isPresent()) {
-            return useOptional.get();
-
-        }
-        return null;
-    }
-
     public User handelUpdateUser(User reUSer) {
-        User currentUser = this.getUserById(reUSer.getId());
+        User currentUser = this.fetchUserById(reUSer.getId());
         if (currentUser != null) {
             currentUser.setName(reUSer.getName());
             currentUser.setAddress(reUSer.getAddress());
             currentUser.setAge(reUSer.getAge());
             currentUser.setGender(reUSer.getGender());
+
+            // check company
+            if (reUSer.getCompany() != null) {
+                Optional<Company> companyOptional = this.companyService.findById(reUSer.getCompany().getId());
+                currentUser.setCompany(companyOptional.isPresent() ? companyOptional.get() : null);
+            }
+
+            // update
             currentUser = this.userRepository.save(currentUser);
         }
-        // update
+
         return currentUser;
     }
 
     public ResUpdateUserDTO convertResUpdateUserDTO(User user) {
         ResUpdateUserDTO rs = new ResUpdateUserDTO();
+        ResUpdateUserDTO.CompanyUser com = new ResUpdateUserDTO.CompanyUser();
+        if (user.getCompany() != null) {
+            com.setId(user.getCompany().getId());
+            com.setName(user.getCompany().getName());
+            rs.setCompany(com);
+        }
 
         rs.setId(user.getId());
         rs.setName(user.getName());
@@ -114,9 +132,10 @@ public class UserService {
         return this.userRepository.existsByEmail(email);
     }
 
-    public ResCreateUserDTO covertToResCreateUserDTO(User user) {
+    public ResCreateUserDTO convertToResCreateUserDTO(User user) {
 
         ResCreateUserDTO rs = new ResCreateUserDTO();
+        ResCreateUserDTO.CompanyUser com = new ResCreateUserDTO.CompanyUser();
         rs.setId(user.getId());
         rs.setEmail(user.getEmail());
         rs.setName(user.getName());
@@ -125,11 +144,18 @@ public class UserService {
         rs.setAddress(user.getAddress());
         rs.setCreatedAt(user.getCreatedAt());
 
+        if (user.getCompany() != null) {
+            com.setId(user.getCompany().getId());
+            com.setName(user.getCompany().getName());
+            rs.setCompany(com);
+        }
+
         return rs;
     }
 
-    public ResGetIdUserDTO convertToResGetIdUserDTO(User user) {
-        ResGetIdUserDTO rs = new ResGetIdUserDTO();
+    public ResUserDTO convertToResGetIdUserDTO(User user) {
+        ResUserDTO rs = new ResUserDTO();
+        ResUserDTO.CompanyUser com = new ResUserDTO.CompanyUser();
         rs.setId(user.getId());
         rs.setAddress(user.getAddress());
         rs.setEmail(user.getEmail());
@@ -138,6 +164,12 @@ public class UserService {
         rs.setAge(user.getAge());
         rs.setCreateAt(user.getCreatedAt());
         rs.setUpdateAt(user.getUpdatedAt());
+
+        if (user.getCompany() != null) {
+            com.setId(user.getCompany().getId());
+            com.setName(user.getCompany().getName());
+            rs.setCompany(com);
+        }
         return rs;
     }
 

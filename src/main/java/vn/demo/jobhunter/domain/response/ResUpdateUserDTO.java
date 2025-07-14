@@ -2,8 +2,14 @@ package vn.demo.jobhunter.domain.response;
 
 import java.time.Instant;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import vn.demo.jobhunter.util.constant.GenderEnum;
 
+@Getter
+@Setter
 public class ResUpdateUserDTO {
     private long id;
     private String name;
@@ -11,53 +17,15 @@ public class ResUpdateUserDTO {
     private String address;
     private int age;
     private Instant updateAt;
+    private CompanyUser company;
 
-    public long getId() {
-        return id;
-    }
+    @Getter
+    @Setter
 
-    public void setId(long id) {
-        this.id = id;
-    }
+    public static class CompanyUser {
+        private long id;
+        private String name;
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public GenderEnum getGender() {
-        return gender;
-    }
-
-    public void setGender(GenderEnum gender) {
-        this.gender = gender;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public int getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
-
-    public Instant getUpdateAt() {
-        return updateAt;
-    }
-
-    public void setUpdateAt(Instant updateAt) {
-        this.updateAt = updateAt;
     }
 
 }
